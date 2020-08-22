@@ -24,7 +24,6 @@ func GetSelectorAttributes(url, selector, attributeKey string) ([]string, []erro
 				selector,
 				attributeKey,
 			)
-
 			errors = append(errors, message)
 		}
 		attributes = append(attributes, attr)
