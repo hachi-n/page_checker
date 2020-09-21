@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hachi-n/page_checker/lib/page"
+	"github.com/hachi-n/page_checker/lib/status"
 	"io/ioutil"
 )
 
@@ -23,15 +24,18 @@ func Apply(jsonPath string) error {
 
 func pagesCheck(pages []*page.Page) error {
 	var err error
+	var statuses []*status.Status
+
 	for _, page := range pages {
-		errors := page.ImageUrlCheck()
-		if errors != nil {
-			err = fmt.Errorf("%v errors: %v\n", err, errors)
-			fmt.Printf("url: %s, status: ng\n", page.Url.String())
-			continue
-		}
-		fmt.Printf("url: %s, status: ok\n", page.Url.String())
+		statuses = append(statuses, page.ImageUrlCheck()...)
 	}
 
-	return err
+	jsonBytes, err := json.MarshalIndent(statuses, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(jsonBytes))
+
+	return nil
 }

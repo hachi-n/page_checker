@@ -3,6 +3,8 @@ package page
 import (
 	"fmt"
 	"github.com/hachi-n/page_checker/lib/scraper"
+	"github.com/hachi-n/page_checker/lib/status"
+	"github.com/hachi-n/page_checker/lib/util"
 	"net/http"
 	u "net/url"
 	"os"
@@ -32,29 +34,40 @@ func NewPages(urls []string) []*Page {
 	return pages
 }
 
-func (p *Page) ImageUrlCheck() []error {
-	imageUrls, errors := scraper.GetSelectorAttributes(p.Url.String(), "img", "src")
+func (p *Page) ImageUrlCheck() []*status.Status {
+	imageUrls, documentStatus := scraper.GetSelectorAttributes(p.Url.String(), "img", "src")
+	var statuses []*status.Status
+	if documentStatus != nil {
+		statuses = append(statuses, documentStatus)
+	}
+
+	imageUrls = util.UniqSlice(imageUrls)
 
 	for _, imageUrl := range imageUrls {
 		normalizedUrl, err := p.normalizeUrl(imageUrl)
 		if err != nil {
-			errors = append(errors, err)
+			s := status.NewStatus(p.Url.String(), normalizedUrl, false, err)
+			statuses = append(statuses, s)
 			continue
 		}
 		resp, err := http.Get(normalizedUrl)
 		if err != nil {
-			errors = append(errors, err)
+			s := status.NewStatus(p.Url.String(), normalizedUrl, false, err)
+			statuses = append(statuses, s)
 			continue
 		}
 		if !p.httpStatusCheck(resp.StatusCode) {
-			errors = append(errors, fmt.Errorf(
-				"Image Access Error. Url: %s, ImageUrl: %s",
-				p.Url.String(), normalizedUrl),
-			)
+			err = fmt.Errorf("Image Access Error.")
+			s := status.NewStatus(p.Url.String(), normalizedUrl, false, err)
+			statuses = append(statuses, s)
+			continue
 		}
+
+		s := status.NewStatus(p.Url.String(), normalizedUrl, true, nil)
+		statuses = append(statuses, s)
 	}
 
-	return errors
+	return statuses
 }
 
 func (p *Page) normalizeUrl(url string) (string, error) {
