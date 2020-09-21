@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hachi-n/page_checker/lib/page"
 	"github.com/hachi-n/page_checker/lib/status"
+	"github.com/hachi-n/page_checker/lib/util"
 	"io/ioutil"
 )
 
@@ -18,6 +19,7 @@ func Apply(jsonPath string) error {
 	if err := json.Unmarshal(b, &urls); err != nil {
 		return err
 	}
+	urls = util.UniqSlice(urls)
 
 	return pagesCheck(page.NewPages(urls))
 }
