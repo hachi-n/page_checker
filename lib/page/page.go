@@ -44,7 +44,7 @@ func (p *Page) ImageUrlCheck() []*status.Status {
 	}
 
 	if len(imageUrls) < 1 {
-		s := status.NewStatus(p.Url.String(), "no image.", false, nil)
+		s := status.NewStatus(p.Url.String(), "no image.", true, nil)
 		statuses = append(statuses, s)
 		return statuses
 	}
