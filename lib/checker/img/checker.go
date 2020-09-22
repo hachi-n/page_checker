@@ -26,9 +26,13 @@ func Apply(jsonPath string, outputPath string) error {
 	if err != nil {
 		return err
 	}
+
 	err = ioutil.WriteFile(outputPath, jsonBytes, 0666)
 	if err != nil {
-		return err
+
+		outputPath = "./result.json"
+		fmt.Printf("write file err: %v\n Write here instead: %s\n", err, outputPath)
+		ioutil.WriteFile(outputPath, jsonBytes, 0666)
 	}
 
 	fmt.Printf("Please check file: %s\n", outputPath)
