@@ -33,7 +33,6 @@ func Apply(jsonPath string, outputPath string) error {
 
 	err = ioutil.WriteFile(outputPath, jsonBytes, 0666)
 	if err != nil {
-
 		outputPath = "./result.json"
 		fmt.Printf("write file err: %v\n Write here instead: %s\n", err, outputPath)
 		ioutil.WriteFile(outputPath, jsonBytes, 0666)
