@@ -37,8 +37,16 @@ func NewPages(urls []string) []*Page {
 func (p *Page) ImageUrlCheck() []*status.Status {
 	imageUrls, documentStatus := scraper.GetSelectorAttributes(p.Url.String(), "img", "src")
 	var statuses []*status.Status
+
 	if documentStatus != nil {
 		statuses = append(statuses, documentStatus)
+		return statuses
+	}
+
+	if len(imageUrls) < 1 {
+		s := status.NewStatus(p.Url.String(), "no image.", false, nil)
+		statuses = append(statuses, s)
+		return statuses
 	}
 
 	imageUrls = util.UniqSlice(imageUrls)

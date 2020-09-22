@@ -1,12 +1,14 @@
 package img
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/cheggaaa/pb/v3"
 	"github.com/hachi-n/page_checker/lib/page"
 	"github.com/hachi-n/page_checker/lib/status"
 	"github.com/hachi-n/page_checker/lib/util"
+	"golang.org/x/sync/semaphore"
 	"io/ioutil"
 	"strings"
 	"sync"
@@ -43,7 +45,7 @@ func Apply(jsonPath string, outputPath string) error {
 }
 
 const (
-	pbMaxWidth   = 100
+	pbMaxWidth = 100
 
 	threadLimit  = 30
 	threadWeight = 1
@@ -73,33 +75,25 @@ func (i *ImageCheckResult) Store(s []*status.Status) {
 }
 
 func pagesCheck(pages []*page.Page) ([]byte, error) {
-	//var w sync.WaitGroup
-	//smph := semaphore.NewWeighted(threadLimit)
-	//results := NewImageCheckResult(len(pages))
-	//
-	//for _, pg := range pages {
-	//	w.Add(1)
-	//	smph.Acquire(context.Background(), threadWeight)
-	//
-	//	go func(p *page.Page) {
-	//		sts := p.ImageUrlCheck()
-	//
-	//		results.Store(sts)
-	//
-	//		smph.Release(threadWeight)
-	//		w.Done()
-	//	}(pg)
-	//}
-	//
-	//w.Wait()
-	//results.bar.Finish()
-
-
+	var w sync.WaitGroup
+	smph := semaphore.NewWeighted(threadLimit)
 	results := NewImageCheckResult(len(pages))
+
 	for _, pg := range pages {
-		results.statuses = append(results.statuses, pg.ImageUrlCheck()...)
-		results.bar.Increment()
+		w.Add(1)
+		smph.Acquire(context.Background(), threadWeight)
+
+		go func(p *page.Page) {
+			sts := p.ImageUrlCheck()
+
+			results.Store(sts)
+
+			smph.Release(threadWeight)
+			w.Done()
+		}(pg)
 	}
+
+	w.Wait()
 	results.bar.Finish()
 
 	return json.MarshalIndent(
