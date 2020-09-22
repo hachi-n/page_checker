@@ -3,6 +3,7 @@ package img
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cheggaaa/pb/v3"
 	"github.com/hachi-n/page_checker/lib/page"
 	"github.com/hachi-n/page_checker/lib/status"
 	"github.com/hachi-n/page_checker/lib/util"
@@ -24,13 +25,22 @@ func Apply(jsonPath string) error {
 	return pagesCheck(page.NewPages(urls))
 }
 
+const pbMaxWidth = 100
+
 func pagesCheck(pages []*page.Page) error {
 	var err error
 	var statuses []*status.Status
 
+	count := len(pages)
+
+	bar := pb.Simple.Start(count)
+	bar.SetMaxWidth(pbMaxWidth)
+
 	for _, page := range pages {
 		statuses = append(statuses, page.ImageUrlCheck()...)
+		bar.Increment()
 	}
+	bar.Finish()
 
 	jsonBytes, err := json.MarshalIndent(statuses, "", "    ")
 	if err != nil {
