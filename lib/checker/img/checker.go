@@ -79,18 +79,18 @@ func pagesCheck(pages []*page.Page) ([]byte, error) {
 	smph := semaphore.NewWeighted(threadLimit)
 	results := NewImageCheckResult(len(pages))
 
-	for _, page := range pages {
+	for _, pg := range pages {
 		w.Add(1)
 		smph.Acquire(context.Background(), threadWeight)
 
-		go func() {
-			sts := page.ImageUrlCheck()
+		go func(p *page.Page) {
+			sts := p.ImageUrlCheck()
 
 			results.Store(sts)
 
 			smph.Release(threadWeight)
 			w.Done()
-		}()
+		}(pg)
 	}
 
 	w.Wait()
