@@ -12,3 +12,13 @@ func JsonFlag(destination *string, required bool, defaultValue string) *cli.Stri
 	}
 }
 
+func OutputFlag(destination *string, required bool, defaultValue string) *cli.StringFlag {
+	return &cli.StringFlag{
+		Name:        "output",
+		Value:       defaultValue,
+		Usage:       "",
+		Required:    required,
+		Destination: destination,
+	}
+}
+

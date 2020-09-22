@@ -7,16 +7,17 @@ import (
 )
 
 func imgCommand() *cli.Command {
-	var jsonPath string
+	var jsonPath, outputPath string
 	return &cli.Command{
 		Name:        "img",
 		Usage:       "page_checker img --json ${YOUR_JSON_PATH}",
 		Description: "page image file connection confirmation.",
 		Flags: []cli.Flag{
 			options.JsonFlag(&jsonPath, true, ""),
+			options.OutputFlag(&outputPath, false, "./result.json"),
 		},
 		Action: func(c *cli.Context) error {
-			return checker.Apply(jsonPath)
+			return checker.Apply(jsonPath, outputPath)
 		},
 	}
 }

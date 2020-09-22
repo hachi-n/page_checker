@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 )
 
-func Apply(jsonPath string) error {
+func Apply(jsonPath string, outputPath string) error {
 	b, err := ioutil.ReadFile(jsonPath)
 	if err != nil {
 		return err
@@ -22,12 +22,23 @@ func Apply(jsonPath string) error {
 	}
 	urls = util.UniqSlice(urls)
 
-	return pagesCheck(page.NewPages(urls))
+	jsonBytes, err := pagesCheck(page.NewPages(urls))
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(outputPath, jsonBytes, 0666)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Please check file: %s\n", outputPath)
+
+	return nil
 }
 
 const pbMaxWidth = 100
 
-func pagesCheck(pages []*page.Page) error {
+func pagesCheck(pages []*page.Page) ([]byte, error) {
 	var err error
 	var statuses []*status.Status
 
@@ -44,10 +55,8 @@ func pagesCheck(pages []*page.Page) error {
 
 	jsonBytes, err := json.MarshalIndent(statuses, "", "    ")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	fmt.Println(string(jsonBytes))
-
-	return nil
+	return jsonBytes, nil
 }
