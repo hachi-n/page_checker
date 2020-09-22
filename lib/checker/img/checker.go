@@ -10,6 +10,7 @@ import (
 	"github.com/hachi-n/page_checker/lib/util"
 	"golang.org/x/sync/semaphore"
 	"io/ioutil"
+	"strings"
 	"sync"
 )
 
@@ -45,7 +46,8 @@ func Apply(jsonPath string, outputPath string) error {
 
 const (
 	pbMaxWidth   = 100
-	threadLimit  = 10
+
+	threadLimit  = 30
 	threadWeight = 1
 )
 
@@ -66,18 +68,16 @@ func NewImageCheckResult(count int) *ImageCheckResult {
 
 func (i *ImageCheckResult) Store(s []*status.Status) {
 	i.mu.Lock()
+	defer i.mu.Unlock()
+
 	i.statuses = append(i.statuses, s...)
 	i.bar.Increment()
-	i.mu.Unlock()
 }
 
 func pagesCheck(pages []*page.Page) ([]byte, error) {
-	var err error
-	var statuses []*status.Status
 	var w sync.WaitGroup
 	smph := semaphore.NewWeighted(threadLimit)
 	results := NewImageCheckResult(len(pages))
-
 
 	for _, page := range pages {
 		w.Add(1)
@@ -85,7 +85,9 @@ func pagesCheck(pages []*page.Page) ([]byte, error) {
 
 		go func() {
 			sts := page.ImageUrlCheck()
+
 			results.Store(sts)
+
 			smph.Release(threadWeight)
 			w.Done()
 		}()
@@ -94,10 +96,9 @@ func pagesCheck(pages []*page.Page) ([]byte, error) {
 	w.Wait()
 	results.bar.Finish()
 
-	jsonBytes, err := json.MarshalIndent(statuses, "", "    ")
-	if err != nil {
-		return nil, err
-	}
-
-	return jsonBytes, nil
+	return json.MarshalIndent(
+		results.statuses,
+		"",
+		strings.Repeat(" ", 4),
+	)
 }
